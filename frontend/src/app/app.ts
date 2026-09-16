@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -10,12 +10,33 @@ import {
   RespuestaFormulario,
   Seccion,
   TipoAmbiente,
+  TipoRespuesta,
 } from './models/cbc.models';
 
 interface SeccionAgrupada {
   seccion: Seccion;
   preguntas: Pregunta[];
 }
+
+interface BorradorRespuesta {
+  respuesta: string;
+  observacion: string;
+  evidenciaNombre?: string;
+}
+
+interface Borrador {
+  tipoAmbiente: TipoAmbiente;
+  checklistSeleccionado: string;
+  sedeFilial: string;
+  facultad: string;
+  escuela: string;
+  ambienteNumero: string;
+  ubicacionAmbiente: string;
+  observacionesGenerales: string;
+  respuestasPorChecklist: Record<string, Record<string, BorradorRespuesta>>;
+}
+
+const CLAVE_BORRADOR = 'cbc_iii_borrador_v1';
 
 @Component({
   selector: 'app-root',
@@ -53,7 +74,26 @@ export class App implements OnInit {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
+  @HostListener('window:beforeunload', ['$event'])
+  evitarSalida(event: BeforeUnloadEvent): void {
+    this.persistirBorrador();
+    if (this.tieneDatosParaGuardar() && !this.guardando) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
   ngOnInit(): void {
+    const borrador = this.leerBorrador();
+    if (borrador) {
+      this.tipoAmbiente = borrador.tipoAmbiente;
+      this.sedeFilial = borrador.sedeFilial ?? '';
+      this.facultad = borrador.facultad ?? '';
+      this.escuela = borrador.escuela ?? '';
+      this.ambienteNumero = borrador.ambienteNumero ?? '';
+      this.ubicacionAmbiente = borrador.ubicacionAmbiente ?? '';
+      this.observacionesGenerales = borrador.observacionesGenerales ?? '';
+    }
     void this.cargarChecklists();
   }
 
@@ -71,7 +111,13 @@ export class App implements OnInit {
         this.cbcService.getChecklists(this.tipoAmbiente)
       );
       if (this.checklists.length) {
-        this.checklistSeleccionado = this.checklists[0].documentId;
+        const borrador = this.leerBorrador();
+        const guardado = borrador?.checklistSeleccionado;
+        this.checklistSeleccionado =
+          guardado &&
+          this.checklists.some((checklist) => checklist.documentId === guardado)
+            ? guardado
+            : this.checklists[0].documentId;
         this.construirSecciones();
       }
     } catch (error) {
@@ -85,11 +131,13 @@ export class App implements OnInit {
   }
 
   onTipoAmbienteChange(tipoAmbiente: TipoAmbiente): void {
+    this.persistirBorrador();
     this.tipoAmbiente = tipoAmbiente;
     void this.cargarChecklists();
   }
 
   onChecklistChange(): void {
+    this.persistirBorrador();
     this.construirSecciones();
   }
 
@@ -118,12 +166,21 @@ export class App implements OnInit {
 
   private inicializarRespuestas(): void {
     this.respuestas = {};
+    const guardados =
+      this.leerBorrador()?.respuestasPorChecklist?.[this.checklistSeleccionado];
     for (const grupo of this.secciones) {
       for (const pregunta of grupo.preguntas) {
         this.respuestas[pregunta.documentId] = {
           respuesta: '',
           observacion: '',
         };
+        const guardado = guardados?.[pregunta.documentId];
+        if (guardado) {
+          this.respuestas[pregunta.documentId].respuesta =
+            (guardado.respuesta as TipoRespuesta) ?? '';
+          this.respuestas[pregunta.documentId].observacion =
+            guardado.observacion ?? '';
+        }
       }
     }
   }
@@ -147,19 +204,60 @@ export class App implements OnInit {
       : 0;
   }
 
-  seleccionarEvidencia(event: Event, pregunta: Pregunta): void {
+  async seleccionarEvidencia(event: Event, pregunta: Pregunta): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) {
       return;
     }
 
-    const archivo = input.files[0];
+    const archivo = await this.comprimirImagen(input.files[0]);
     const respuesta = this.respuestas[pregunta.documentId];
     if (respuesta.evidenciaUrl) {
       URL.revokeObjectURL(respuesta.evidenciaUrl);
     }
     respuesta.evidencia = archivo;
     respuesta.evidenciaUrl = URL.createObjectURL(archivo);
+    this.persistirBorrador();
+  }
+
+  private async comprimirImagen(
+    archivo: File,
+    maxLado = 1600,
+    calidad = 0.72
+  ): Promise<File> {
+    if (!archivo.type.startsWith('image/')) {
+      return archivo;
+    }
+    try {
+      const bitmap = await createImageBitmap(archivo);
+      const mayor = Math.max(bitmap.width, bitmap.height);
+      if (mayor <= maxLado && archivo.size <= 400000) {
+        bitmap.close();
+        return archivo;
+      }
+      const escala = Math.min(1, maxLado / mayor);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * escala));
+      canvas.height = Math.max(1, Math.round(bitmap.height * escala));
+      const contexto = canvas.getContext('2d');
+      if (!contexto) {
+        bitmap.close();
+        return archivo;
+      }
+      contexto.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((resolver) =>
+        canvas.toBlob(resolver, 'image/jpeg', calidad)
+      );
+      if (!blob) {
+        return archivo;
+      }
+      const nombre = archivo.name.replace(/\.[^.]+$/, '') + '.jpg';
+      return new File([blob], nombre, { type: 'image/jpeg' });
+    } catch (error) {
+      console.error('No se pudo comprimir la imagen:', error);
+      return archivo;
+    }
   }
 
   eliminarEvidencia(pregunta: Pregunta): void {
@@ -169,6 +267,80 @@ export class App implements OnInit {
     }
     respuesta.evidencia = undefined;
     respuesta.evidenciaUrl = undefined;
+    this.persistirBorrador();
+  }
+
+  persistirBorrador(): void {
+    const borrador: Borrador = {
+      tipoAmbiente: this.tipoAmbiente,
+      checklistSeleccionado: this.checklistSeleccionado,
+      sedeFilial: this.sedeFilial,
+      facultad: this.facultad,
+      escuela: this.escuela,
+      ambienteNumero: this.ambienteNumero,
+      ubicacionAmbiente: this.ubicacionAmbiente,
+      observacionesGenerales: this.observacionesGenerales,
+      respuestasPorChecklist: this.leerBorrador()?.respuestasPorChecklist ?? {},
+    };
+
+    const respuestasActuales: Record<string, BorradorRespuesta> = {};
+    for (const grupo of this.secciones) {
+      for (const pregunta of grupo.preguntas) {
+        const respuesta = this.respuestas[pregunta.documentId];
+        if (!respuesta) {
+          continue;
+        }
+        respuestasActuales[pregunta.documentId] = {
+          respuesta: respuesta.respuesta,
+          observacion: respuesta.observacion,
+          evidenciaNombre: respuesta.evidencia?.name,
+        };
+      }
+    }
+    borrador.respuestasPorChecklist[this.checklistSeleccionado] =
+      respuestasActuales;
+
+    try {
+      localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(borrador));
+    } catch (error) {
+      console.error('No se pudo guardar el borrador en el dispositivo:', error);
+    }
+  }
+
+  private leerBorrador(): Borrador | null {
+    try {
+      const crudo = localStorage.getItem(CLAVE_BORRADOR);
+      if (!crudo) {
+        return null;
+      }
+      return JSON.parse(crudo) as Borrador;
+    } catch (error) {
+      console.error('No se pudo leer el borrador del dispositivo:', error);
+      return null;
+    }
+  }
+
+  limpiarBorradorPendiente(): void {
+    try {
+      localStorage.removeItem(CLAVE_BORRADOR);
+    } catch (error) {
+      console.error('No se pudo limpiar el borrador del dispositivo:', error);
+    }
+  }
+
+  private tieneDatosParaGuardar(): boolean {
+    if (this.sedeFilial || this.facultad || this.escuela || this.ambienteNumero || this.ubicacionAmbiente) {
+      return true;
+    }
+    for (const grupo of this.secciones) {
+      for (const pregunta of grupo.preguntas) {
+        const respuesta = this.respuestas[pregunta.documentId];
+        if (respuesta?.respuesta || respuesta?.observacion || respuesta?.evidencia) {
+          return true;
+        }
+      }
+    }
+    return this.observacionesGenerales.length > 0;
   }
 
   async guardar(): Promise<void> {
@@ -199,15 +371,21 @@ export class App implements OnInit {
 
     this.guardando = true;
     try {
-      const evidenciasPorPregunta: Record<string, string[]> = {};
-      for (const pregunta of preguntas) {
-        const respuesta = this.respuestas[pregunta.documentId];
-        if (respuesta.evidencia) {
+      const evidenciasPorPregunta: Record<string, number[]> = {};
+      const preguntasConEvidencia = preguntas.filter(
+        (p) => this.respuestas[p.documentId].evidencia
+      );
+
+      const subidas = await Promise.all(
+        preguntasConEvidencia.map(async (p) => {
           const media = await firstValueFrom(
-            this.cbcService.subirEvidencia(respuesta.evidencia)
+            this.cbcService.subirEvidencia(this.respuestas[p.documentId].evidencia!)
           );
-          evidenciasPorPregunta[pregunta.documentId] = [media.documentId];
-        }
+          return { idPregunta: p.documentId, id: media.id };
+        })
+      );
+      for (const { idPregunta, id } of subidas) {
+        evidenciasPorPregunta[idPregunta] = [id];
       }
 
       const totales = this.calcularTotales(preguntas);
@@ -231,40 +409,24 @@ export class App implements OnInit {
         })
       );
 
-      try {
-        await firstValueFrom(
-          this.cbcService.publicarEntidad(
-            'evaluaciones',
-            evaluacion.documentId
-          )
-        );
-      } catch (error) {
-        console.error('Error publicando la evaluación:', error);
-      }
-
-      for (const pregunta of preguntas) {
-        const respuesta = this.respuestas[pregunta.documentId];
-        const creada = await firstValueFrom(
-          this.cbcService.crearRespuesta({
-            respuesta: respuesta.respuesta as 'SI' | 'NO' | 'NO_APLICA',
-            esConforme: this.esConforme(pregunta, respuesta.respuesta),
-            observacion: respuesta.observacion,
-            evaluacion: evaluacion.documentId,
-            pregunta: pregunta.documentId,
-            evidencias: evidenciasPorPregunta[pregunta.documentId] ?? [],
-          })
-        );
-
-        try {
-          await firstValueFrom(
-            this.cbcService.publicarEntidad('respuestas', creada.documentId)
+      await Promise.all(
+        preguntas.map((p) => {
+          const respuesta = this.respuestas[p.documentId];
+          return firstValueFrom(
+            this.cbcService.crearRespuesta({
+              respuesta: respuesta.respuesta as 'SI' | 'NO' | 'NO_APLICA',
+              esConforme: this.esConforme(p, respuesta.respuesta),
+              observacion: respuesta.observacion,
+              evaluacion: evaluacion.documentId,
+              pregunta: p.documentId,
+              evidencias: evidenciasPorPregunta[p.documentId] ?? [],
+            })
           );
-        } catch (error) {
-          console.error('Error publicando la respuesta:', error);
-        }
-      }
+        })
+      );
 
       this.mensajeExito = 'Evaluación guardada correctamente.';
+      this.limpiarBorradorPendiente();
     } catch (error) {
       console.error('Error guardando la evaluación:', error);
       this.mensajeError =

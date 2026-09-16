@@ -47,7 +47,7 @@ export interface Respuesta {
   observacion?: string;
   evaluacion: string;
   pregunta: string;
-  evidencias?: string[];
+  evidencias?: number[];
 }
 
 export interface Evaluacion {

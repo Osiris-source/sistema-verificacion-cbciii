@@ -1,0 +1,12 @@
+# Configuracion del tunel nombrado de Cloudflare.
+# Este archivo se genera con setup.ps1 (no editar a mano: se sobrescribe).
+# App publica: cbc.cbciii.eu.org       -> frontend Angular (puerto 4200)
+# API publica: cbc-api.cbciii.eu.org   -> Strapi backend (puerto 1337)
+tunnel: cbciii
+credentials-file: C:\Users\flavi\.cloudflared\cbciii.json
+ingress:
+  - hostname: cbc.cbciii.eu.org
+    service: http://localhost:4200
+  - hostname: cbc-api.cbciii.eu.org
+    service: http://localhost:1337
+  - service: http_status:404

@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { apiMediaUrl } from '../services/api-url';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { CbcService } from '../services/cbc.service';
@@ -44,6 +45,7 @@ export class Reportes {
   detalle: EvaluacionDetalle | null = null;
   cargandoDetalle = false;
   detalleFilas: DetalleSeccion[] = [];
+  imagenAmpliada: string | null = null;
 
   constructor(
     private cbcService: CbcService,
@@ -120,6 +122,17 @@ export class Reportes {
   cerrarDetalle(): void {
     this.detalle = null;
     this.detalleFilas = [];
+    this.imagenAmpliada = null;
+  }
+
+  ampliarImagen(url: string): void {
+    this.imagenAmpliada = url;
+    this.cdr.markForCheck();
+  }
+
+  cerrarImagen(): void {
+    this.imagenAmpliada = null;
+    this.cdr.markForCheck();
   }
 
   private construirDetalle(): void {
@@ -188,10 +201,7 @@ export class Reportes {
   }
 
   urlMedia(url: string): string {
-    if (!url) {
-      return '';
-    }
-    return url.startsWith('http') ? url : `http://localhost:1337${url}`;
+    return apiMediaUrl(url);
   }
 
   private filas(): string[][] {

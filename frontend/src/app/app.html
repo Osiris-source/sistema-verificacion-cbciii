@@ -58,6 +58,7 @@
             type="text"
             placeholder="Escriba la sede o filial..."
             [(ngModel)]="sedeFilial"
+            (ngModelChange)="persistirBorrador()"
           >
         </td>
       </tr>
@@ -69,6 +70,7 @@
             type="text"
             placeholder="Escriba la facultad..."
             [(ngModel)]="facultad"
+            (ngModelChange)="persistirBorrador()"
           >
         </td>
       </tr>
@@ -80,6 +82,7 @@
             type="text"
             placeholder="Escriba la escuela..."
             [(ngModel)]="escuela"
+            (ngModelChange)="persistirBorrador()"
           >
         </td>
       </tr>
@@ -91,6 +94,7 @@
             type="text"
             placeholder="Escriba el número o nombre del ambiente..."
             [(ngModel)]="ambienteNumero"
+            (ngModelChange)="persistirBorrador()"
           >
         </td>
       </tr>
@@ -102,6 +106,7 @@
             type="text"
             placeholder="Escriba la ubicación (piso, pabellón, etc.)..."
             [(ngModel)]="ubicacionAmbiente"
+            (ngModelChange)="persistirBorrador()"
           >
         </td>
       </tr>
@@ -225,20 +230,20 @@
                 </td>
                 <td class="col-cumplimiento" data-label="Cumplimiento">
                   <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'SI'">
-                    <input type="radio" [name]="'r-' + pregunta.documentId" value="SI" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="SI" [(ngModel)]="respuestas[pregunta.documentId].respuesta" (ngModelChange)="persistirBorrador()">
                     <span>Sí</span>
                   </label>
                   <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'NO'">
-                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO" [(ngModel)]="respuestas[pregunta.documentId].respuesta" (ngModelChange)="persistirBorrador()">
                     <span>No</span>
                   </label>
                   <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'NO_APLICA'">
-                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO_APLICA" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO_APLICA" [(ngModel)]="respuestas[pregunta.documentId].respuesta" (ngModelChange)="persistirBorrador()">
                     <span>NA</span>
                   </label>
                 </td>
                 <td class="col-observaciones" data-label="Observaciones">
-                  <textarea rows="3" placeholder="Observación..." [(ngModel)]="respuestas[pregunta.documentId].observacion"></textarea>
+                  <textarea rows="3" placeholder="Observación..." [(ngModel)]="respuestas[pregunta.documentId].observacion" (ngModelChange)="persistirBorrador()"></textarea>
                 </td>
                 <td class="col-prueba" data-label="Prueba">
                   <label class="boton-evidencia" [for]="'foto-' + pregunta.documentId" *ngIf="pregunta.permiteEvidencia">
@@ -293,6 +298,7 @@
         rows="4"
         placeholder="Observaciones generales de la evaluación..."
         [(ngModel)]="observacionesGenerales"
+        (ngModelChange)="persistirBorrador()"
       ></textarea>
     </div>
 
@@ -322,6 +328,11 @@
         {{ guardando ? 'Guardando...' : 'Guardar evaluación' }}
 
       </button>
+
+      <p class="nota-autoguardado">
+        Los datos que marque en este dispositivo se guardan solos. Si cierra o recarga la
+        página, podrá continuar donde quedó.
+      </p>
 
     </div>
 

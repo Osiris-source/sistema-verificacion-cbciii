@@ -275,6 +275,7 @@
                       *ngFor="let evidencia of fila.respuesta?.evidencias"
                       [src]="urlMedia(evidencia.url)"
                       alt="Evidencia"
+                      (click)="ampliarImagen(urlMedia(evidencia.url))"
                     >
                   </div>
                   <span *ngIf="!fila.respuesta?.evidencias?.length">—</span>
@@ -294,4 +295,20 @@
     </ng-container>
 
   </div>
+</div>
+
+<div
+  class="visor-overlay"
+  *ngIf="imagenAmpliada"
+  (click)="cerrarImagen()"
+>
+  <img
+    class="visor-imagen"
+    [src]="imagenAmpliada"
+    alt="Evidencia ampliada"
+    (click)="$event.stopPropagation()"
+  >
+  <button type="button" class="visor-cerrar" (click)="cerrarImagen()">
+    ✕
+  </button>
 </div>

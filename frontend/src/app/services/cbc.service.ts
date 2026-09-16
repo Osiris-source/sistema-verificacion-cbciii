@@ -15,11 +15,13 @@ import {
   TipoAmbiente,
 } from '../models/cbc.models';
 
+import { apiBaseUrl } from './api-url';
+
 @Injectable({
   providedIn: 'root',
 })
 export class CbcService {
-  private apiUrl = 'http://localhost:1337/api';
+  private apiUrl = apiBaseUrl();
 
   constructor(private http: HttpClient) {}
 

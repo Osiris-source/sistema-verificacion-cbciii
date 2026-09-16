@@ -1,20 +1,31 @@
-// import type { Core } from '@strapi/strapi';
+const UPLOAD_ACTION = 'plugin::upload.content-api.upload';
 
 export default {
-  /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
-   */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register() {},
 
-  /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
-   */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: any }) {
+    const publicRole = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findOne({ where: { type: 'public' } });
+
+    if (!publicRole) {
+      return;
+    }
+
+    const existing = await strapi.db
+      .query('plugin::users-permissions.permission')
+      .findOne({ where: { action: UPLOAD_ACTION } });
+
+    if (!existing) {
+      const permission = await strapi.db
+        .query('plugin::users-permissions.permission')
+        .create({ data: { action: UPLOAD_ACTION } });
+
+      await strapi.db
+        .query('plugin::users-permissions.permission-role-link')
+        .create({
+          data: { role_id: publicRole.id, permission_id: permission.id },
+        });
+    }
+  },
 };
