@@ -1,0 +1,26 @@
+# ============ Generales ============
+node_modules/
+dist/
+build/
+.tmp/
+*.log
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
+*.tsbuildinfo
+.eslintcache
+
+# ============ Backend (Strapi) ============
+backend/.env
+backend/.env.local
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep
+backend/.strapi
+backend/.strapi-updater.json
+backend/.strapi-cloud.json
+backend/config/env/
+backend/exports/
+
+# ============ Frontend (Angular) ============
+frontend/.angular/cache

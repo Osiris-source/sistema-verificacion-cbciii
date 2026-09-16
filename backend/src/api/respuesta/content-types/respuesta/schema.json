@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "respuestas",
+  "info": {
+    "singularName": "respuesta",
+    "pluralName": "respuestas",
+    "displayName": "Respuesta"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "respuesta": {
+      "type": "enumeration",
+      "enum": [
+        "SI",
+        "NO",
+        "NO_APLICA"
+      ]
+    },
+    "esConforme": {
+      "type": "boolean",
+      "default": true
+    },
+    "observacion": {
+      "type": "text"
+    },
+    "evaluacion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::evaluacion.evaluacion",
+      "inversedBy": "respuestas"
+    },
+    "pregunta": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pregunta.pregunta",
+      "inversedBy": "respuestas"
+    },
+    "evidencias": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    }
+  }
+}

@@ -1,0 +1,330 @@
+<div class="pagina">
+
+  <header class="encabezado">
+
+    <table class="cabecera-documento">
+
+      <tr class="fila-titulo">
+        <td colspan="2">
+          Estado situacional de la infraestructura, mantenimiento y seguridad
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Checklist:</td>
+        <td class="celda-valor">Medios de verificación</td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Fecha:</td>
+        <td class="celda-valor">{{ fechaHoy }}</td>
+      </tr>
+
+      <tr class="fila-titulo">
+        <td colspan="2">Datos generales</td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Condición básica:</td>
+        <td class="celda-valor">CBC III</td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Componente:</td>
+        <td class="celda-valor">
+          Infraestructura y equipamiento adecuado al cumplimiento de sus
+          funciones (aulas, biblioteca, laboratorios, pabellones)
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Tipo de ambiente</td>
+        <td class="celda-campo">
+          <select
+            [(ngModel)]="tipoAmbiente"
+            (ngModelChange)="onTipoAmbienteChange($event)"
+          >
+            <option value="AULA">Aula</option>
+            <option value="LABORATORIO">Laboratorio</option>
+            <option value="PABELLON">Pabellón</option>
+          </select>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Sede / Filial</td>
+        <td class="celda-campo">
+          <input
+            type="text"
+            placeholder="Escriba la sede o filial..."
+            [(ngModel)]="sedeFilial"
+          >
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Facultad</td>
+        <td class="celda-campo">
+          <input
+            type="text"
+            placeholder="Escriba la facultad..."
+            [(ngModel)]="facultad"
+          >
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Escuela</td>
+        <td class="celda-campo">
+          <input
+            type="text"
+            placeholder="Escriba la escuela..."
+            [(ngModel)]="escuela"
+          >
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Ambiente (aula)</td>
+        <td class="celda-campo">
+          <input
+            type="text"
+            placeholder="Escriba el número o nombre del ambiente..."
+            [(ngModel)]="ambienteNumero"
+          >
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Ubicación del ambiente</td>
+        <td class="celda-campo">
+          <input
+            type="text"
+            placeholder="Escriba la ubicación (piso, pabellón, etc.)..."
+            [(ngModel)]="ubicacionAmbiente"
+          >
+        </td>
+      </tr>
+
+      <tr>
+        <td class="celda-etiqueta">Checklist</td>
+        <td class="celda-campo">
+          <select
+            *ngIf="checklists.length > 1"
+            [(ngModel)]="checklistSeleccionado"
+            (ngModelChange)="onChecklistChange()"
+          >
+            <option
+              *ngFor="let checklist of checklists"
+              [value]="checklist.documentId"
+            >
+              {{ checklist.nombre }}
+              <ng-container *ngIf="checklist.version">
+                (v{{ checklist.version }})
+              </ng-container>
+            </option>
+          </select>
+
+          <span
+            class="checklist-fijo"
+            *ngIf="checklists.length === 1"
+          >
+            {{ checklists[0].nombre }}
+            <ng-container *ngIf="checklists[0].version">
+              (v{{ checklists[0].version }})
+            </ng-container>
+          </span>
+
+          <span
+            class="sin-checklist"
+            *ngIf="!cargando && checklists.length === 0"
+          >
+            No hay checklist disponible para este tipo de ambiente.
+          </span>
+        </td>
+      </tr>
+
+      <tr class="fila-progreso">
+        <td colspan="2">
+          <div class="progreso" *ngIf="totalPreguntas > 0">
+
+            <div class="progreso-texto">
+              {{ respondidas }} de {{ totalPreguntas }} preguntas respondidas
+            </div>
+
+            <div class="progreso-barra">
+              <div
+                class="progreso-lleno"
+                [style.width.%]="porcentajeProgreso"
+              ></div>
+            </div>
+
+          </div>
+        </td>
+      </tr>
+
+    </table>
+
+  </header>
+
+
+  <main class="contenedor">
+
+    <div
+      class="estado"
+      *ngIf="cargando"
+    >
+      Cargando checklist...
+    </div>
+
+    <div
+      class="estado"
+      *ngIf="!cargando && checklists.length === 0"
+    >
+      No hay checklist disponible para el tipo de ambiente seleccionado.
+    </div>
+
+
+    <div class="contenedor-tabla" *ngIf="secciones.length > 0">
+
+      <table class="checklist-tabla">
+
+        <thead>
+          <tr>
+            <th class="col-item">Item</th>
+            <th class="col-consideraciones">Consideraciones</th>
+            <th class="col-cumplimiento">Cumplimiento</th>
+            <th class="col-observaciones">Observaciones</th>
+            <th class="col-prueba">Prueba</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <ng-container *ngFor="let grupo of secciones">
+
+            <tr class="fila-seccion">
+              <td colspan="5">
+                {{ grupo.seccion.nombre }}
+                <small>
+                  ({{ grupo.preguntas.length }} preguntas)
+                </small>
+              </td>
+            </tr>
+
+            <ng-container *ngFor="let pregunta of grupo.preguntas; let i = index">
+              <tr
+                class="fila-pregunta"
+                [class.pregunta-error]="errores[pregunta.documentId]"
+              >
+                <td class="col-item" data-label="Item">{{ i + 1 }}</td>
+                <td class="col-consideraciones" data-label="Consideraciones">
+                  <span class="texto-pregunta">{{ pregunta.texto }}</span>
+                  <span class="error-pregunta" *ngIf="errores[pregunta.documentId]">
+                    {{ errores[pregunta.documentId] }}
+                  </span>
+                </td>
+                <td class="col-cumplimiento" data-label="Cumplimiento">
+                  <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'SI'">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="SI" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <span>Sí</span>
+                  </label>
+                  <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'NO'">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <span>No</span>
+                  </label>
+                  <label [class.seleccionada]="respuestas[pregunta.documentId]?.respuesta === 'NO_APLICA'">
+                    <input type="radio" [name]="'r-' + pregunta.documentId" value="NO_APLICA" [(ngModel)]="respuestas[pregunta.documentId].respuesta">
+                    <span>NA</span>
+                  </label>
+                </td>
+                <td class="col-observaciones" data-label="Observaciones">
+                  <textarea rows="3" placeholder="Observación..." [(ngModel)]="respuestas[pregunta.documentId].observacion"></textarea>
+                </td>
+                <td class="col-prueba" data-label="Prueba">
+                  <label class="boton-evidencia" [for]="'foto-' + pregunta.documentId" *ngIf="pregunta.permiteEvidencia">
+                    📷 Foto
+                  </label>
+                  <input hidden type="file" accept="image/*" capture="environment" [id]="'foto-' + pregunta.documentId" (change)="seleccionarEvidencia($event, pregunta)">
+                  <div class="preview" *ngIf="respuestas[pregunta.documentId]?.evidenciaUrl">
+                    <img [src]="respuestas[pregunta.documentId].evidenciaUrl" alt="Evidencia">
+                    <button type="button" (click)="eliminarEvidencia(pregunta)">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+
+            <tr class="fila-agregar">
+              <td colspan="5">
+                <ng-container *ngIf="agregarEnSeccion !== grupo.seccion.documentId">
+                  <button type="button" class="boton-agregar" (click)="iniciarAgregarPregunta(grupo)">
+                    + Agregar otra pregunta
+                  </button>
+                </ng-container>
+                <div class="form-agregar" *ngIf="agregarEnSeccion === grupo.seccion.documentId">
+                  <input
+                    type="text"
+                    placeholder="Escriba el texto de la nueva pregunta..."
+                    [(ngModel)]="nuevaPreguntaTexto"
+                    (keyup.enter)="guardarNuevaPregunta(grupo)"
+                  >
+                  <button type="button" class="boton-guardar-chico" (click)="guardarNuevaPregunta(grupo)" [disabled]="guardando || !nuevaPreguntaTexto.trim()">
+                    {{ guardando ? 'Guardando...' : 'Guardar' }}
+                  </button>
+                  <button type="button" class="boton-cancelar" (click)="cancelarAgregarPregunta()">
+                    Cancelar
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+          </ng-container>
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <div class="observaciones-generales" *ngIf="secciones.length > 0">
+      <label for="observaciones-generales">
+        Observaciones generales
+      </label>
+      <textarea
+        id="observaciones-generales"
+        rows="4"
+        placeholder="Observaciones generales de la evaluación..."
+        [(ngModel)]="observacionesGenerales"
+      ></textarea>
+    </div>
+
+    <div
+      class="mensaje mensaje-exito"
+      *ngIf="mensajeExito"
+    >
+      {{ mensajeExito }}
+    </div>
+
+    <div
+      class="mensaje mensaje-error"
+      *ngIf="mensajeError"
+    >
+      {{ mensajeError }}
+    </div>
+
+    <div class="acciones">
+
+      <button
+        class="boton-guardar"
+        type="button"
+        (click)="guardar()"
+        [disabled]="guardando || cargando || totalPreguntas === 0"
+      >
+
+        {{ guardando ? 'Guardando...' : 'Guardar evaluación' }}
+
+      </button>
+
+    </div>
+
+  </main>
+
+</div>

@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "seccions",
+  "info": {
+    "singularName": "seccion",
+    "pluralName": "seccions",
+    "displayName": "Seccion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "orden": {
+      "type": "integer"
+    },
+    "activo": {
+      "type": "boolean",
+      "default": true
+    },
+    "checklist": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::checklist.checklist",
+      "inversedBy": "secciones"
+    },
+    "preguntas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pregunta.pregunta",
+      "mappedBy": "seccion"
+    },
+    "codigo": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "escuelas",
+  "info": {
+    "singularName": "escuela",
+    "pluralName": "escuelas",
+    "displayName": "Escuela"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "codigo": {
+      "type": "string"
+    },
+    "estado": {
+      "type": "boolean",
+      "default": true
+    },
+    "facultad": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::facultad.facultad",
+      "inversedBy": "escuelas"
+    },
+    "ambientes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ambiente.ambiente",
+      "mappedBy": "escuela"
+    }
+  }
+}

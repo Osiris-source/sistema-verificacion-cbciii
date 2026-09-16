@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "checklists",
+  "info": {
+    "singularName": "checklist",
+    "pluralName": "checklists",
+    "displayName": "Checklist"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "tipoAmbiente": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "AULA",
+        "LABORATORIO",
+        "PABELLON"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "descripcion": {
+      "type": "text"
+    },
+    "fechaVigencia": {
+      "type": "date"
+    },
+    "activo": {
+      "type": "boolean",
+      "default": true
+    },
+    "secciones": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::seccion.seccion",
+      "mappedBy": "checklist"
+    },
+    "evaluaciones": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::evaluacion.evaluacion",
+      "mappedBy": "checklist"
+    }
+  }
+}

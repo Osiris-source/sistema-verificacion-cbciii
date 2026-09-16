@@ -1,0 +1,76 @@
+{
+  "kind": "collectionType",
+  "collectionName": "evaluaciones",
+  "info": {
+    "singularName": "evaluacion",
+    "pluralName": "evaluaciones",
+    "displayName": "Evaluacion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fechaEvaluacion": {
+      "type": "date"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "BORRADOR",
+        "FINALIZADO"
+      ]
+    },
+    "observacionesGenerales": {
+      "type": "text"
+    },
+    "porcentajeCumplimiento": {
+      "type": "decimal"
+    },
+    "totalAplicables": {
+      "type": "integer"
+    },
+    "totalConformes": {
+      "type": "integer"
+    },
+    "totalNoConformes": {
+      "type": "integer"
+    },
+    "totalNoAplica": {
+      "type": "integer"
+    },
+    "sedeFilial": {
+      "type": "string"
+    },
+    "facultad": {
+      "type": "string"
+    },
+    "escuela": {
+      "type": "string"
+    },
+    "ambienteNumero": {
+      "type": "string"
+    },
+    "ubicacionAmbiente": {
+      "type": "string"
+    },
+    "ambiente": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ambiente.ambiente",
+      "inversedBy": "evaluaciones"
+    },
+    "checklist": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::checklist.checklist",
+      "inversedBy": "evaluaciones"
+    },
+    "respuestas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::respuesta.respuesta",
+      "mappedBy": "evaluacion"
+    }
+  }
+}

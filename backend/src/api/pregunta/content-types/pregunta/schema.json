@@ -1,0 +1,63 @@
+{
+  "kind": "collectionType",
+  "collectionName": "preguntas",
+  "info": {
+    "singularName": "pregunta",
+    "pluralName": "preguntas",
+    "displayName": "Pregunta"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "codigo": {
+      "type": "string",
+      "required": true
+    },
+    "numero": {
+      "type": "integer"
+    },
+    "texto": {
+      "type": "text"
+    },
+    "orden": {
+      "type": "integer"
+    },
+    "respuestaConforme": {
+      "type": "enumeration",
+      "enum": [
+        "SI",
+        "NO"
+      ]
+    },
+    "permiteEvidencia": {
+      "type": "boolean",
+      "default": true
+    },
+    "requiereEvidenciaNoConforme": {
+      "type": "boolean",
+      "default": true
+    },
+    "requiereObservacionNoConforme": {
+      "type": "boolean",
+      "default": true
+    },
+    "activo": {
+      "type": "boolean",
+      "default": true
+    },
+    "seccion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::seccion.seccion",
+      "inversedBy": "preguntas"
+    },
+    "respuestas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::respuesta.respuesta",
+      "mappedBy": "pregunta"
+    }
+  }
+}
