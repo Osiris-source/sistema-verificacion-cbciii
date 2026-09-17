@@ -1,3 +1,79 @@
+export const FACULTADES = [
+  'Facultad de Ingeniería de Sistemas e Informática',
+  'Facultad de Derecho y Ciencias Políticas',
+  'Facultad de Medicina Humana',
+  'Facultad de Ciencias de la Salud',
+  'Facultad de Ciencias Económicas',
+  'FEyH - Idiomas',
+  'Facultad de Ingeniería Agroindustrial',
+  'Facultad de Ciencias Agrarias',
+  'Facultad de Ingeniería Civil y Arquitectura',
+  'Facultad de Medicina Veterinaria',
+  'FCE - Turismo',
+  'Facultad de Educación y Humanidades',
+  'Facultad de Ecología',
+];
+
+export const FACULTAD_ESCUELAS: Record<string, string[]> = {
+  'Facultad de Ingeniería de Sistemas e Informática': [
+    'Ingeniería de Sistemas e Informática',
+  ],
+  'Facultad de Derecho y Ciencias Políticas': ['Derecho'],
+  'Facultad de Medicina Humana': ['Medicina Humana', 'Enfermería'],
+  'Facultad de Ciencias de la Salud': ['Obstetricia'],
+  'Facultad de Ciencias Económicas': [
+    'Administración',
+    'Economía',
+    'Contabilidad',
+  ],
+  'FEyH - Idiomas': ['Idiomas'],
+  'Facultad de Ingeniería Agroindustrial': ['Ingeniería Agroindustrial'],
+  'Facultad de Ciencias Agrarias': ['Agronomía'],
+  'Facultad de Ingeniería Civil y Arquitectura': [
+    'Ingeniería Civil',
+    'Arquitectura',
+  ],
+  'Facultad de Medicina Veterinaria': ['Medicina Veterinaria'],
+  'FCE - Turismo': ['Turismo'],
+  'Facultad de Educación y Humanidades': [
+    'Educación Inicial',
+    'Educación Primaria',
+    'Educación Secundaria',
+    'Psicología',
+  ],
+  'Facultad de Ecología': ['Ingeniería Ambiental', 'Ingeniería Sanitaria'],
+};
+
+export function escuelasDeFacultad(facultad: string): string[] {
+  return FACULTAD_ESCUELAS[facultad] ?? [];
+}
+
+export const SEDE_FACULTADES: Record<string, string[]> = {
+  Tarapoto: [
+    'Facultad de Ingeniería de Sistemas e Informática',
+    'Facultad de Derecho y Ciencias Políticas',
+    'Facultad de Medicina Humana',
+    'Facultad de Ciencias de la Salud',
+    'Facultad de Ciencias Económicas',
+    'FEyH - Idiomas',
+    'Facultad de Ingeniería Agroindustrial',
+    'Facultad de Ciencias Agrarias',
+    'Facultad de Ingeniería Civil y Arquitectura',
+    'Facultad de Medicina Veterinaria',
+  ],
+  Lamas: ['FCE - Turismo'],
+  Rioja: ['Facultad de Educación y Humanidades'],
+  Moyobamba: ['Facultad de Ecología'],
+};
+
+export function facultadesDeSede(sede: string): string[] {
+  return SEDE_FACULTADES[sede] ?? FACULTADES;
+}
+
+export const TODAS_LAS_ESCUELAS = Array.from(
+  new Set(Object.values(FACULTAD_ESCUELAS).flat())
+);
+
 export type TipoAmbiente = 'AULA' | 'LABORATORIO' | 'PABELLON';
 
 export type TipoRespuesta = 'SI' | 'NO' | 'NO_APLICA' | '';

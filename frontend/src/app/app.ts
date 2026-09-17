@@ -1,16 +1,17 @@
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CbcService } from './services/cbc.service';
 import {
   Checklist,
+  FACULTADES,
   Pregunta,
   RespuestaFormulario,
   Seccion,
   TipoAmbiente,
   TipoRespuesta,
+  escuelasDeFacultad,
+  facultadesDeSede,
 } from './models/cbc.models';
 
 interface SeccionAgrupada {
@@ -40,11 +41,13 @@ const CLAVE_BORRADOR = 'cbc_iii_borrador_v1';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
+  facultadesDisponibles: string[] = [...FACULTADES];
+  escuelasDisponibles: string[] = [];
   tipoAmbiente: TipoAmbiente = 'AULA';
   checklists: Checklist[] = [];
   checklistSeleccionado = '';
@@ -88,8 +91,15 @@ export class App implements OnInit {
     if (borrador) {
       this.tipoAmbiente = borrador.tipoAmbiente;
       this.sedeFilial = borrador.sedeFilial ?? '';
+      this.facultadesDisponibles = this.sedeFilial
+        ? facultadesDeSede(this.sedeFilial)
+        : [...FACULTADES];
       this.facultad = borrador.facultad ?? '';
+      this.escuelasDisponibles = escuelasDeFacultad(this.facultad);
       this.escuela = borrador.escuela ?? '';
+      if (this.escuelasDisponibles.length === 1 && !this.escuela) {
+        this.escuela = this.escuelasDisponibles[0];
+      }
       this.ambienteNumero = borrador.ambienteNumero ?? '';
       this.ubicacionAmbiente = borrador.ubicacionAmbiente ?? '';
       this.observacionesGenerales = borrador.observacionesGenerales ?? '';
@@ -134,6 +144,30 @@ export class App implements OnInit {
     this.persistirBorrador();
     this.tipoAmbiente = tipoAmbiente;
     void this.cargarChecklists();
+  }
+
+  onSedeChange(sede: string): void {
+    this.facultadesDisponibles = sede ? facultadesDeSede(sede) : [...FACULTADES];
+    if (!this.facultadesDisponibles.includes(this.facultad)) {
+      this.facultad = '';
+    }
+    this.escuelasDisponibles = escuelasDeFacultad(this.facultad);
+    if (!this.escuelasDisponibles.includes(this.escuela)) {
+      this.escuela =
+        this.escuelasDisponibles.length === 1
+          ? this.escuelasDisponibles[0]
+          : '';
+    }
+    this.persistirBorrador();
+  }
+
+  onFacultadChange(facultad: string): void {
+    this.escuelasDisponibles = escuelasDeFacultad(facultad);
+    this.escuela =
+      this.escuelasDisponibles.length === 1
+        ? this.escuelasDisponibles[0]
+        : '';
+    this.persistirBorrador();
   }
 
   onChecklistChange(): void {

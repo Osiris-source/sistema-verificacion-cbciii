@@ -63,10 +63,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "allowedHosts": [
-              "etc-potentially-paintings-basename.trycloudflare.com",
-              "unix-casual-compared-river.trycloudflare.com"
-            ]
+            "allowedHosts": true
           },
           "configurations": {
             "production": {

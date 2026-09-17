@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { apiMediaUrl } from '../services/api-url';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -7,9 +6,13 @@ import { CbcService } from '../services/cbc.service';
 import {
   EvaluacionDetalle,
   EvaluacionReporte,
+  FACULTADES,
   Pregunta,
   RespuestaDetalle,
   Seccion,
+  TODAS_LAS_ESCUELAS,
+  escuelasDeFacultad,
+  facultadesDeSede,
 } from '../models/cbc.models';
 
 interface DetallePregunta {
@@ -24,11 +27,13 @@ interface DetalleSeccion {
 
 @Component({
   selector: 'app-reportes',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './reportes.html',
   styleUrl: './reportes.scss',
 })
 export class Reportes {
+  facultadesDisponibles: string[] = [...FACULTADES];
+  escuelasDisponibles = [...TODAS_LAS_ESCUELAS];
   sedeFilial = '';
   facultad = '';
   escuela = '';
@@ -51,6 +56,28 @@ export class Reportes {
     private cbcService: CbcService,
     private readonly cdr: ChangeDetectorRef
   ) {}
+
+  onSedeChange(sede: string): void {
+    this.facultadesDisponibles = sede ? facultadesDeSede(sede) : [...FACULTADES];
+    if (this.facultad && !this.facultadesDisponibles.includes(this.facultad)) {
+      this.facultad = '';
+    }
+    this.escuelasDisponibles = this.facultad
+      ? escuelasDeFacultad(this.facultad)
+      : [...TODAS_LAS_ESCUELAS];
+    if (this.escuela && !this.escuelasDisponibles.includes(this.escuela)) {
+      this.escuela = '';
+    }
+  }
+
+  onFacultadChange(facultad: string): void {
+    this.escuelasDisponibles = facultad
+      ? escuelasDeFacultad(facultad)
+      : [...TODAS_LAS_ESCUELAS];
+    if (this.escuela && !this.escuelasDisponibles.includes(this.escuela)) {
+      this.escuela = '';
+    }
+  }
 
   async buscar(): Promise<void> {
     this.cargando = true;
@@ -86,6 +113,8 @@ export class Reportes {
     this.sedeFilial = '';
     this.facultad = '';
     this.escuela = '';
+    this.facultadesDisponibles = [...FACULTADES];
+    this.escuelasDisponibles = [...TODAS_LAS_ESCUELAS];
     this.ambiente = '';
     this.fechaDesde = '';
     this.fechaHasta = '';

@@ -8,29 +8,37 @@
 
       <label>
         Sede / Filial
-        <input
-          type="text"
-          placeholder="Ej. Lima Centro"
-          [(ngModel)]="sedeFilial"
-        >
+        <select [(ngModel)]="sedeFilial" (ngModelChange)="onSedeChange($event)">
+          <option value="">Todas</option>
+          <option value="Tarapoto">Tarapoto</option>
+          <option value="Lamas">Lamas</option>
+          <option value="Rioja">Rioja</option>
+          <option value="Moyobamba">Moyobamba</option>
+        </select>
       </label>
 
       <label>
         Facultad
-        <input
-          type="text"
-          placeholder="Ej. Ingeniería"
+        <select
+          class="select-facultad"
           [(ngModel)]="facultad"
+          (ngModelChange)="onFacultadChange($event)"
         >
+          <option value="">Todas</option>
+          @for (f of facultadesDisponibles; track f) {
+            <option [value]="f">{{ f }}</option>
+          }
+        </select>
       </label>
 
       <label>
         Escuela
-        <input
-          type="text"
-          placeholder="Ej. Sistemas"
-          [(ngModel)]="escuela"
-        >
+        <select [(ngModel)]="escuela">
+          <option value="">Todas</option>
+          @for (e of escuelasDisponibles; track e) {
+            <option [value]="e">{{ e }}</option>
+          }
+        </select>
       </label>
 
       <label>
@@ -74,241 +82,262 @@
 
   </div>
 
-  <div class="estado" *ngIf="cargando">
-    Cargando evaluaciones...
-  </div>
-
-  <div
-    class="mensaje mensaje-ok"
-    *ngIf="mostrarOk && !cargando"
-  >
-    {{ mostrarOk }}
-  </div>
-
-  <div
-    class="mensaje mensaje-error"
-    *ngIf="mostrarError && !cargando"
-  >
-    {{ mostrarError }}
-  </div>
-
-  <div class="contenedor-tabla" *ngIf="hayResultados">
-
-    <div class="barra-exportar">
-      <span>{{ evaluaciones.length }} evaluaciones encontradas</span>
-      <div>
-        <button type="button" class="boton-exportar" (click)="exportarExcel()">
-          Exportar Excel
-        </button>
-        <button type="button" class="boton-exportar" (click)="exportarPDF()">
-          Exportar PDF
-        </button>
-      </div>
+  @if (cargando) {
+    <div class="estado">
+      Cargando evaluaciones...
     </div>
+  }
 
-    <table class="tabla-reporte">
-
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Sede / Filial</th>
-          <th>Facultad</th>
-          <th>Escuela</th>
-          <th>Ambiente</th>
-          <th>Checklist</th>
-          <th>Estado</th>
-          <th>Aplicables</th>
-          <th>Conformes</th>
-          <th>No conformes</th>
-          <th>No aplica</th>
-          <th>% Cumplimiento</th>
-          <th></th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr *ngFor="let evaluacion of evaluaciones">
-          <td>{{ evaluacion.fechaEvaluacion }}</td>
-          <td>{{ evaluacion.sedeFilial ?? '—' }}</td>
-          <td>{{ evaluacion.facultad ?? '—' }}</td>
-          <td>{{ evaluacion.escuela ?? '—' }}</td>
-          <td>{{ evaluacion.ambienteNumero ?? '—' }}</td>
-          <td>{{ evaluacion.checklist?.nombre ?? '—' }}</td>
-          <td>{{ evaluacion.estado }}</td>
-          <td class="num">{{ evaluacion.totalAplicables ?? 0 }}</td>
-          <td class="num">{{ evaluacion.totalConformes ?? 0 }}</td>
-          <td class="num">{{ evaluacion.totalNoConformes ?? 0 }}</td>
-          <td class="num">{{ evaluacion.totalNoAplica ?? 0 }}</td>
-          <td class="num">{{ evaluacion.porcentajeCumplimiento ?? 0 }}%</td>
-          <td class="celda-accion">
-            <button type="button" class="boton-detalle" (click)="verDetalle(evaluacion)">
-              Ver
-            </button>
-          </td>
-        </tr>
-      </tbody>
-
-    </table>
-
-  </div>
-
-</div>
-
-<div class="overlay" *ngIf="detalle">
-  <div class="modal-detalle">
-
-    <div class="detalle-barra" *ngIf="!cargandoDetalle">
-      <div>
-        <h2>Reporte individual de evaluación</h2>
-        <span class="detalle-subtitulo">
-          {{ detalle.checklist?.nombre ?? 'Checklist CBC III' }} ·
-          {{ detalle.checklist?.version ? 'v' + detalle.checklist.version : '' }}
-        </span>
-      </div>
-      <div class="detalle-acciones">
-        <button type="button" class="boton-pdf" (click)="exportarDetallePDF()">
-          Exportar PDF
-        </button>
-        <button type="button" class="boton-cerrar" (click)="cerrarDetalle()">
-          Cerrar
-        </button>
-      </div>
+  @if (mostrarOk && !cargando) {
+    <div class="mensaje mensaje-ok">
+      {{ mostrarOk }}
     </div>
+  }
 
-    <div class="estado" *ngIf="cargandoDetalle">
-      Cargando reporte individual...
+  @if (mostrarError && !cargando) {
+    <div class="mensaje mensaje-error">
+      {{ mostrarError }}
     </div>
+  }
 
-    <ng-container *ngIf="detalle && !cargandoDetalle">
+  @if (hayResultados) {
+    <div class="contenedor-tabla">
 
-      <table class="detalle-datos">
-        <tr>
-          <td class="detalle-etiqueta">Condición básica:</td>
-          <td class="detalle-valor">CBC III</td>
-          <td class="detalle-etiqueta">Fecha:</td>
-          <td class="detalle-valor">{{ detalle.fechaEvaluacion }}</td>
-        </tr>
-        <tr>
-          <td class="detalle-etiqueta">Checklist:</td>
-          <td class="detalle-valor">
-            {{ detalle.checklist?.nombre ?? '—' }}
-            {{ detalle.checklist?.version ? '(v' + detalle.checklist.version + ')' : '' }}
-          </td>
-          <td class="detalle-etiqueta">Estado:</td>
-          <td class="detalle-valor">{{ detalle.estado }}</td>
-        </tr>
-        <tr>
-          <td class="detalle-etiqueta">Sede / Filial:</td>
-          <td class="detalle-valor">{{ detalle.sedeFilial ?? '—' }}</td>
-          <td class="detalle-etiqueta">Tipo de ambiente:</td>
-          <td class="detalle-valor">{{ detalle.checklist?.tipoAmbiente ?? '—' }}</td>
-        </tr>
-        <tr>
-          <td class="detalle-etiqueta">Facultad:</td>
-          <td class="detalle-valor">{{ detalle.facultad ?? '—' }}</td>
-          <td class="detalle-etiqueta">Escuela:</td>
-          <td class="detalle-valor">{{ detalle.escuela ?? '—' }}</td>
-        </tr>
-        <tr>
-          <td class="detalle-etiqueta">Ambiente:</td>
-          <td class="detalle-valor">{{ detalle.ambienteNumero ?? '—' }}</td>
-          <td class="detalle-etiqueta">Ubicación:</td>
-          <td class="detalle-valor">{{ detalle.ubicacionAmbiente ?? '—' }}</td>
-        </tr>
-        <tr>
-          <td class="detalle-etiqueta">% Cumplimiento:</td>
-          <td class="detalle-valor">{{ detalle.porcentajeCumplimiento ?? 0 }}%</td>
-          <td class="detalle-etiqueta">Totales:</td>
-          <td class="detalle-valor">
-            {{ detalle.totalConformes ?? 0 }} conformes ·
-            {{ detalle.totalNoConformes ?? 0 }} no conformes ·
-            {{ detalle.totalNoAplica ?? 0 }} no aplica
-          </td>
-        </tr>
+      <div class="barra-exportar">
+        <span>{{ evaluaciones.length }} evaluaciones encontradas</span>
+        <div>
+          <button type="button" class="boton-exportar" (click)="exportarExcel()">
+            Exportar Excel
+          </button>
+          <button type="button" class="boton-exportar" (click)="exportarPDF()">
+            Exportar PDF
+          </button>
+        </div>
+      </div>
+
+      <table class="tabla-reporte">
+
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Sede / Filial</th>
+            <th>Facultad</th>
+            <th>Escuela</th>
+            <th>Ambiente</th>
+            <th>Checklist</th>
+            <th>Estado</th>
+            <th>Aplicables</th>
+            <th>Conformes</th>
+            <th>No conformes</th>
+            <th>No aplica</th>
+            <th>% Cumplimiento</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (evaluacion of evaluaciones; track evaluacion.documentId) {
+            <tr>
+              <td>{{ evaluacion.fechaEvaluacion }}</td>
+              <td>{{ evaluacion.sedeFilial ?? '—' }}</td>
+              <td>{{ evaluacion.facultad ?? '—' }}</td>
+              <td>{{ evaluacion.escuela ?? '—' }}</td>
+              <td>{{ evaluacion.ambienteNumero ?? '—' }}</td>
+              <td>{{ evaluacion.checklist?.nombre ?? '—' }}</td>
+              <td>{{ evaluacion.estado }}</td>
+              <td class="num">{{ evaluacion.totalAplicables ?? 0 }}</td>
+              <td class="num">{{ evaluacion.totalConformes ?? 0 }}</td>
+              <td class="num">{{ evaluacion.totalNoConformes ?? 0 }}</td>
+              <td class="num">{{ evaluacion.totalNoAplica ?? 0 }}</td>
+              <td class="num">{{ evaluacion.porcentajeCumplimiento ?? 0 }}%</td>
+              <td class="celda-accion">
+                <button type="button" class="boton-detalle" (click)="verDetalle(evaluacion)">
+                  Ver
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+
       </table>
 
-      <div
-        class="detalle-obs-generales"
-        *ngIf="detalle.observacionesGenerales"
-      >
-        <strong>Observaciones generales:</strong>
-        {{ detalle.observacionesGenerales }}
-      </div>
+    </div>
+  }
 
-      <div class="detalle-listado" *ngIf="detalleFilas.length > 0">
+</div>
 
-        <ng-container *ngFor="let grupo of detalleFilas">
+@if (detalle) {
+  <div class="overlay">
+    <div class="modal-detalle">
 
-          <div class="detalle-seccion">
-            {{ grupo.seccion.nombre }}
-            <small>({{ grupo.preguntas.length }} preguntas)</small>
+      @if (!cargandoDetalle) {
+        <div class="detalle-barra">
+          <div>
+            <h2>Reporte individual de evaluación</h2>
+            <span class="detalle-subtitulo">
+              {{ detalle.checklist?.nombre ?? 'Checklist CBC III' }} ·
+              {{ detalle.checklist?.version ? 'v' + detalle.checklist.version : '' }}
+            </span>
           </div>
+          <div class="detalle-acciones">
+            <button type="button" class="boton-pdf" (click)="exportarDetallePDF()">
+              Exportar PDF
+            </button>
+            <button type="button" class="boton-cerrar" (click)="cerrarDetalle()">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      }
 
-          <table class="detalle-tabla">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Consideraciones</th>
-                <th>Cumplimiento</th>
-                <th>Observaciones</th>
-                <th>Prueba</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let fila of grupo.preguntas; let i = index">
-                <td data-label="Item">{{ fila.pregunta.numero ?? i + 1 }}</td>
-                <td data-label="Consideraciones">{{ fila.pregunta.texto }}</td>
-                <td class="cumplimiento" data-label="Cumplimiento">
-                  <span
-                    class="punto-respuesta"
-                    [class.si]="fila.respuesta?.respuesta === 'SI'"
-                    [class.no]="fila.respuesta?.respuesta === 'NO'"
-                    [class.na]="fila.respuesta?.respuesta === 'NO_APLICA'"
-                  >
-                    {{ etiquetaRespuesta(fila.respuesta) }}
-                  </span>
-                </td>
-                <td data-label="Observaciones">{{ fila.respuesta?.observacion || '—' }}</td>
-                <td data-label="Prueba">
-                  <div class="detalle-evidencias" *ngIf="fila.respuesta?.evidencias?.length">
-                    <img
-                      *ngFor="let evidencia of fila.respuesta?.evidencias"
-                      [src]="urlMedia(evidencia.url)"
-                      alt="Evidencia"
-                      (click)="ampliarImagen(urlMedia(evidencia.url))"
-                    >
-                  </div>
-                  <span *ngIf="!fila.respuesta?.evidencias?.length">—</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      @if (cargandoDetalle) {
+        <div class="estado">
+          Cargando reporte individual...
+        </div>
+      }
 
-        </ng-container>
+      @if (detalle && !cargandoDetalle) {
 
-      </div>
+        <table class="detalle-datos">
+          <tr>
+            <td class="detalle-etiqueta">Condición básica:</td>
+            <td class="detalle-valor">CBC III</td>
+            <td class="detalle-etiqueta">Fecha:</td>
+            <td class="detalle-valor">{{ detalle.fechaEvaluacion }}</td>
+          </tr>
+          <tr>
+            <td class="detalle-etiqueta">Checklist:</td>
+            <td class="detalle-valor">
+              {{ detalle.checklist?.nombre ?? '—' }}
+              {{ detalle.checklist?.version ? '(v' + detalle.checklist.version + ')' : '' }}
+            </td>
+            <td class="detalle-etiqueta">Estado:</td>
+            <td class="detalle-valor">{{ detalle.estado }}</td>
+          </tr>
+          <tr>
+            <td class="detalle-etiqueta">Sede / Filial:</td>
+            <td class="detalle-valor">{{ detalle.sedeFilial ?? '—' }}</td>
+            <td class="detalle-etiqueta">Tipo de ambiente:</td>
+            <td class="detalle-valor">{{ detalle.checklist?.tipoAmbiente ?? '—' }}</td>
+          </tr>
+          <tr>
+            <td class="detalle-etiqueta">Facultad:</td>
+            <td class="detalle-valor">{{ detalle.facultad ?? '—' }}</td>
+            <td class="detalle-etiqueta">Escuela:</td>
+            <td class="detalle-valor">{{ detalle.escuela ?? '—' }}</td>
+          </tr>
+          <tr>
+            <td class="detalle-etiqueta">Ambiente:</td>
+            <td class="detalle-valor">{{ detalle.ambienteNumero ?? '—' }}</td>
+            <td class="detalle-etiqueta">Ubicación:</td>
+            <td class="detalle-valor">{{ detalle.ubicacionAmbiente ?? '—' }}</td>
+          </tr>
+          <tr>
+            <td class="detalle-etiqueta">% Cumplimiento:</td>
+            <td class="detalle-valor">{{ detalle.porcentajeCumplimiento ?? 0 }}%</td>
+            <td class="detalle-etiqueta">Totales:</td>
+            <td class="detalle-valor">
+              {{ detalle.totalConformes ?? 0 }} conformes ·
+              {{ detalle.totalNoConformes ?? 0 }} no conformes ·
+              {{ detalle.totalNoAplica ?? 0 }} no aplica
+            </td>
+          </tr>
+        </table>
 
-      <div class="estado" *ngIf="detalleFilas.length === 0">
-        Esta evaluación no tiene respuestas registradas.
-      </div>
+        @if (detalle.observacionesGenerales) {
+          <div class="detalle-obs-generales">
+            <strong>Observaciones generales:</strong>
+            {{ detalle.observacionesGenerales }}
+          </div>
+        }
 
-    </ng-container>
+        @if (detalleFilas.length > 0) {
+          <div class="detalle-listado">
 
+            @for (grupo of detalleFilas; track grupo.seccion.documentId) {
+
+              <div class="detalle-seccion">
+                {{ grupo.seccion.nombre }}
+                <small>({{ grupo.preguntas.length }} preguntas)</small>
+              </div>
+
+              <table class="detalle-tabla">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Consideraciones</th>
+                    <th>Cumplimiento</th>
+                    <th>Observaciones</th>
+                    <th>Prueba</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (fila of grupo.preguntas; track fila.pregunta.documentId; let i = $index) {
+                    <tr>
+                      <td data-label="Item">{{ fila.pregunta.numero ?? i + 1 }}</td>
+                      <td data-label="Consideraciones">{{ fila.pregunta.texto }}</td>
+                      <td class="cumplimiento" data-label="Cumplimiento">
+                        <span
+                          class="punto-respuesta"
+                          [class.si]="fila.respuesta?.respuesta === 'SI'"
+                          [class.no]="fila.respuesta?.respuesta === 'NO'"
+                          [class.na]="fila.respuesta?.respuesta === 'NO_APLICA'"
+                        >
+                          {{ etiquetaRespuesta(fila.respuesta) }}
+                        </span>
+                      </td>
+                      <td data-label="Observaciones">{{ fila.respuesta?.observacion || '—' }}</td>
+                      <td data-label="Prueba">
+                        @if (fila.respuesta?.evidencias?.length) {
+                          <div class="detalle-evidencias">
+                            @for (evidencia of (fila.respuesta?.evidencias ?? []); track evidencia.documentId) {
+                              <img
+                                [src]="urlMedia(evidencia.url)"
+                                alt="Evidencia"
+                                (click)="ampliarImagen(urlMedia(evidencia.url))"
+                              >
+                            }
+                          </div>
+                        }
+                        @if (!fila.respuesta?.evidencias?.length) {
+                          <span>—</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+            }
+
+          </div>
+        }
+
+        @if (detalleFilas.length === 0) {
+          <div class="estado">
+            Esta evaluación no tiene respuestas registradas.
+          </div>
+        }
+
+      }
+
+    </div>
   </div>
-</div>
+}
 
-<div
-  class="visor-overlay"
-  *ngIf="imagenAmpliada"
-  (click)="cerrarImagen()"
->
-  <img
-    class="visor-imagen"
-    [src]="imagenAmpliada"
-    alt="Evidencia ampliada"
-    (click)="$event.stopPropagation()"
+@if (imagenAmpliada) {
+  <div
+    class="visor-overlay"
+    (click)="cerrarImagen()"
   >
-  <button type="button" class="visor-cerrar" (click)="cerrarImagen()">
-    ✕
-  </button>
-</div>
+    <img
+      class="visor-imagen"
+      [src]="imagenAmpliada"
+      alt="Evidencia ampliada"
+      (click)="$event.stopPropagation()"
+    >
+    <button type="button" class="visor-cerrar" (click)="cerrarImagen()">
+      ✕
+    </button>
+  </div>
+}
